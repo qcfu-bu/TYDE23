@@ -1,0 +1,96 @@
+
+data doc : U
+  | DocNil   : doc
+  | DocCons  : doc -> doc -> doc
+  | DocText  : string -> doc
+  | DocNest  : nat -> doc -> doc
+  | DocBreak : string -> doc
+  | DocGroup : doc -> doc
+
+def dcons : doc -> doc -> doc | x y => DocCons x y
+def empty := DocNil
+def text : string -> doc | s => DocText s
+def nest : nat -> doc -> doc | i d => DocNest i d
+def break := DocBreak " " 
+def breakWith : string -> doc | s => DocBreak s
+def group : doc -> doc | d => DocGroup d
+
+data sdoc : U
+  | SNil  : sdoc
+  | SText : string -> sdoc -> sdoc
+  | SLine : nat -> sdoc -> sdoc
+
+data mode : U
+  | Flat  : mode
+  | Break : mode
+
+def sdocToString : sdoc -> string
+  | SNil => ""
+  | SText s d => s ^ sdocToString d
+  | SLine i d => 
+    let rec loop : nat -> string
+      | zero => ""
+      | succ n => " " ^ loop n
+    in
+    "\n" ^ loop i ^ sdocToString d
+
+def fits : nat -> list (nat * mode * doc) -> bool
+  | zero _                          => false
+  | w nil                           => true
+  | w ((i, m, DocNil) :: z)         => fits w z
+  | w ((i, m, DocCons x y) :: z)    => fits w ((i, m, x) :: (i, m, y) :: z)
+  | w ((i, m, DocNest j x) :: z)    => fits w ((i + j, m, x) :: z)
+  | w ((i, m, DocText s) :: z)      => fits (w - strlen s) z
+  | w ((i, Flat, DocBreak s) :: z)  => fits (w - strlen s) z
+  | w ((i, Break, DocBreak s) :: z) => true
+  | w ((i, m, DocGroup x) :: z)     => fits w ((i, Flat, x) :: z)
+
+def format : nat -> nat -> list (nat * mode * doc) -> sdoc
+  | w k nil                           => SNil
+  | w k ((i, m, DocNil) :: z)         => format w k z
+  | w k ((i, m, DocCons x y) :: z)    => format w k ((i, m, x) :: (i, m, y) :: z)
+  | w k ((i, m, DocNest j x) :: z)    => format w k ((i + j, m, x) :: z)
+  | w k ((i, m, DocText s) :: z)      => SText s (format w (k + strlen s) z)
+  | w k ((i, Flat, DocBreak s) :: z)  => SText s (format w (k + strlen s) z)
+  | w k ((i, Break, DocBreak s) :: z) => SLine i (format w i z)
+  | w k ((i, m, DocGroup x) :: z)     => 
+    if fits (w - k) ((i, Flat, x) :: z) then
+      format w k ((i, Flat, x) :: z)
+    else
+      format w k ((i, Break, x) :: z)
+
+def pretty : nat -> doc -> string
+  | w d => 
+    let sd := format (succ w) 0 ((0, Flat, group d) :: nil) in
+    sdocToString sd ^ "\n"
+
+def join : doc -> doc -> doc
+  | DocNil y => y
+  | x DocNil => x
+  | x y => dcons (dcons x break) y
+
+def binop : string -> string -> string -> doc
+  | left op right => 
+    group (nest 2 
+      (join (group (join (text left) (text op)))
+            (text right)))
+
+def cond  := binop "a" "==" "b"
+def expr1 := binop "a" "<<" "b"
+def expr2 := binop "a" "+" "b"
+
+def ifthen : doc -> doc -> doc -> doc
+  | c e1 e2 =>
+    group 
+      (join (group (nest 2 (join (text "if") c))) 
+      (join (group (nest 2 (join (text "then") e1))) 
+            (group (nest 2 (join (text "else") e2)))))
+
+def doc := ifthen cond expr1 expr2
+
+open @stdout as stdout
+
+def _ := 
+  let stdout := printline stdout (pretty 10 doc) in
+  let () := close_out stdout in
+  main

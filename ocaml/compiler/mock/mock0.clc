@@ -1,0 +1,17 @@
+def maxn : nat -> nat -> nat 
+  | zero x => x
+  | x zero => x
+  | (succ x) (succ y) => succ (maxn x y)
+
+def foo := maxn 1 2
+
+def string_of_nat : nat -> string
+  | zero => "zero"
+  | succ n => "succ (" ^ string_of_nat n ^ ")"
+
+open @stdout as out
+
+def _ := 
+  let out := printline out (string_of_nat foo) in
+  let () := close_out out in
+  main

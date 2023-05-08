@@ -1,0 +1,31 @@
+def loc := nat
+
+axiom at : ∀ (A : U) -> loc -> L
+axiom new : ∀ (A : U) -> A -> sig loc (fun l => at A l)
+axiom free : ∀ (A : U) (l : loc) -> A -> at A l -> unit
+axiom get : ∀ (A : U) (l : loc) -> at A l -> A × (at A l)
+axiom set : ∀ (A B : U) (l : loc) -> A -> at A l -> ∀ (y : B) -o at A l
+
+data ArrVec (A : U) (l : loc) : loc -> L 
+  | Nil : ArrVec A l 0
+  | Cons : ∀ (n : nat) -> at A (l + n) -> ArrVec A l n -> ArrVec A l (succ n)
+
+def Array : U -> loc -> L
+  | A n => sig loc (fun l => ArrVec A l n)
+
+def nth : 
+  ∀ (A : U) (l m n : loc) -> m < n -> 
+    ArrVec A l n -> (at A (l + m)) ⊗ (at A (l + m) -o ArrVec A l n)
+  | _ _ _ _ le_refl (Cons _ c0 v) => ⟨c0, fun c => Cons _ c v⟩
+  | _ _ _ _ (le_succ _ pf) (Cons _ c0 v0) =>
+    let ⟨c, f⟩ := nth _ _ _ _ pf v0 in
+    ⟨c, fun c => Cons _ c0 (f c)⟩
+
+def index : ∀ (A : U) (m n : loc) -> m < n -> Array A n -> A × Array A n
+  | _ m _ pf a =>
+    let [l, v] := a in
+    let ⟨c, f⟩ := nth _ l _ _ pf v in
+    let [x, c] := get _ (l + m) c in
+    [x, [l, f c]]
+
+def _ := main

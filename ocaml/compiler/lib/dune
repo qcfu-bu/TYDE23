@@ -1,0 +1,5 @@
+(library
+ (name lang)
+ (libraries ppxlib ppx_deriving fmt mparser zarith threads)
+ (preprocess
+  (pps ppx_deriving.std)))

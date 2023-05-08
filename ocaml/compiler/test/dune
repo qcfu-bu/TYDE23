@@ -1,0 +1,5 @@
+(test
+ (name ccilc3)
+ (libraries ppxlib ppx_deriving fmt mparser)
+ (preprocess
+  (pps ppx_deriving.std)))

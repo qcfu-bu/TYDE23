@@ -1,0 +1,40 @@
+data lvec (A : U) : nat -> L 
+  | lnil  : lvec A zero
+  | lcons : ∀ (n : nat) -> A -> lvec A n -> lvec A (succ n)
+
+def head : ∀ (A : U) (n : nat) -> lvec A (succ n) -> A × lvec A n
+  | _ _ (lcons _ hd tl) => [hd, tl]
+
+def kappend : ∀ (A : U) (B : L) (m n : nat) -> lvec A m -> lvec A n -o (lvec A (m + n) -o B) -o B
+  | _ _ zero _ lnil ls2 k => k ls2
+  | _ _ (succ m) n (lcons _ hd tl) ls2 k =>
+    kappend _ _ _ _ tl ls2 (fun res => k (lcons (addn m n) hd res))
+
+def append : ∀ (A : U) (m n : nat) -> lvec A m -> lvec A n -o lvec A (m + n)
+  | _ _ _ xs ys => kappend _ _ _ _ xs ys (fun x => x)
+
+def rep : ∀ (A : U) (n : nat) -> A -> lvec A n
+  | _ zero _ => lnil
+  | _ (succ n) x => lcons _ x (rep _ n x)
+
+def length : ∀ (A : U) (n : nat) -> lvec A n -> box nat
+  | _ _ lnil => [zero]
+  | _ _ (lcons _ hd tl) => 
+    let [len] := length _ _ tl in
+    [succ len]
+
+def string_of_nat : nat -> string
+  | zero => "zero"
+  | succ n => "succ (" ^ string_of_nat n ^ ")"
+
+def foo := rep _ 5 ()
+def bar := rep _ 5 ()
+def baz := append _ _ _ foo bar
+
+open @stdout as stdout
+
+def _ := 
+  let [len] := length _ _ baz in
+  let stdout := printline stdout (string_of_nat len) in
+  let () := close_out stdout in
+  main

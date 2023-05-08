@@ -1,0 +1,13 @@
+open @stdin as stdin
+open @stdout as stdout
+
+def loop : string -> ch‹stdout_t› -> unit
+  | msg ch =>
+    let ch := printline ch msg in
+    loop msg ch
+
+def _ :=
+  let [msg, stdin] := readline stdin in
+  let () := close_in stdin in
+  let () := loop msg stdout in
+  main

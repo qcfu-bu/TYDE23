@@ -1,0 +1,114 @@
+data unit : U
+  | tt : unit
+
+data bool : U
+  | true  : bool
+  | false : bool
+
+data nat : U
+  | zero : nat
+  | succ : nat -> nat
+
+def addn : nat -> nat -> nat
+  | zero x => x
+  | (succ x) y => succ (addn x y)
+
+def subn : nat -> nat -> nat
+  | zero _ => zero
+  | x zero => x
+  | (succ x) (succ y) => subn x y
+
+data option (A : U) : U
+  | none : option A
+  | some : A -> option A
+
+data list (A : U) : U
+  | nil  : list A
+  | cons : A -> list A -> list A
+
+data vec (A : U) : nat -> U
+  | vnil : vec A zero
+  | vcons : ∀ (n : nat) -> A -> vec A n -> vec A (succ n)
+
+data ex (A : U) (P : A -> U) : U
+  | ex_intro : ∀ (x : A) -> P x -> ex A P
+
+data sig (A : U) (P : A -> L) : L
+  | sig_intro : ∀ (x : A) -> P x -> sig A P
+
+data tnsr (A B : L) : L
+  | tnsr_intro : A -> B -> tnsr A B
+
+data box (A : U) : L
+  | box_intro : A -> box A
+
+data ascii : U
+  | Ascii :
+    bool -> bool -> bool -> bool ->
+    bool -> bool -> bool -> bool ->
+    ascii
+
+data string : U
+  | EmptyString : string
+  | String : ascii -> string -> string
+
+def cat : string -> string -> string
+  | EmptyString s => s
+  | (String c s1) s2 => String c (cat s1 s2)
+
+def strlen : string -> nat
+  | EmptyString => zero
+  | String _ s => succ (strlen s)
+
+data le (n : nat) : nat -> U 
+  | le_refl : le n n
+  | le_succ : ∀ (m : nat) -> le n m -> le n (succ m)
+
+def lt : nat -> nat -> U
+  | m n => le (succ m) n
+
+data eq (A : U) (x : A) : A -> U
+  | refl : eq A x x
+
+def stdin_rec : unit -> proto
+  | tt =>
+    !(b : bool) ⋅
+      match b with
+      | true => ?string ⋅ stdin_rec tt
+      | false => end
+
+def stdout_rec : unit -> proto
+  | tt =>
+    !(b : bool) ⋅
+      match b with
+      | true => !string ⋅ stdout_rec tt
+      | false => end
+
+def stderr_rec : unit -> proto
+  | tt =>
+    !(b : bool) ⋅
+      match b with
+      | true => !string ⋅ stderr_rec tt
+      | false => end
+
+def stdin_t  := stdin_rec tt
+def stdout_t := stdout_rec tt
+def stderr_t := stderr_rec tt
+
+def readline : ch‹stdin_t› -> sig string (fun _ => ch‹stdin_t›)
+  | ch => recv (send ch true)
+
+def close_in : ch‹stdin_t› -> unit
+  | ch => close (send ch false)
+
+def printline : ch‹stdout_t› -> string -o ch‹stdout_t›
+  | ch s => send (send ch true) s
+
+def close_out : ch‹stdout_t› -> unit
+  | ch => close (send ch false)
+
+def printerr : ch‹stderr_t› -> string -o ch‹stderr_t›
+  | ch s => send (send ch true) s
+
+def close_err : ch‹stderr_t› -> unit
+  | ch => close (send ch false)

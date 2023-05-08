@@ -1,0 +1,22 @@
+-R . CCLC
+
+AutosubstSsr.v
+ARS.v
+
+clc_context.v
+clc_ast.v
+clc_confluence.v
+clc_subtype.v
+clc_typing.v
+clc_weakening.v
+clc_substitution.v
+clc_inversion.v
+clc_arity_spine.v
+clc_validity.v
+clc_typing_spine.v
+clc_respine.v
+clc_iota_lemma.v
+clc_soundness.v
+clc_resolution.v
+clc_resolve_spine.v
+clc_semantics.v

@@ -1,0 +1,14 @@
+def foo : bool -> U := fun b =>
+  if b then
+    bool
+  else
+    nat
+
+def bar : ∀ (b : bool) -> foo b
+  | true => false
+  | false => zero
+
+def bad : ∀ (A : U) -> 1 <= 0 -> A
+  | _ absurd
+
+def _ := main

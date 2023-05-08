@@ -1,0 +1,50 @@
+data ref_msg : U
+  | GET  : ref_msg
+  | SET  : ref_msg
+  | FREE : ref_msg
+
+def ref_t : U -> proto
+  | A =>
+    ?(msg : ref_msg) ⋅
+      match msg with
+      | GET => !A ⋅ ref_t A
+      | SET => ?A ⋅ ref_t A
+      | FREE => end
+  
+def ref_handler : ∀ (A : U) -> A -> ch‹ref_t A› -o unit
+  | A m ch =>
+    match recv ch with
+    | [GET, ch] => ref_handler _ m (send ch m)
+    | [SET, ch] => 
+      let [m, ch] := recv ch in
+      ref_handler A m ch
+    | [FREE, ch] => close ch
+
+def mk_ref : ∀ (A : U) -> A -> @main -> hc‹ref_t A› ⊗ @main
+  | A m x =>
+    fork (ref : ch‹ref_t A›) <- x with
+    ref_handler A m ref
+
+def set_ref : ∀ (A : U) -> A -> hc‹ref_t A› -o hc‹ref_t A›
+  | A m ref => send (send ref SET) m
+
+def get_ref : ∀ (A : U) -> hc‹ref_t A› -o A × hc‹ref_t A›
+  | A ref => recv (send ref GET)
+
+def free_ref : ∀ (A : U) -> hc‹ref_t A› -o unit
+  | A ref => close (send ref FREE)
+
+open @stdout as stdout
+open @stdin as stdin
+
+def _ :=
+  let ⟨ref, main⟩ := mk_ref _ "hello " main in
+  let [msg1, ref] := get_ref _ ref in
+  let [msg, stdin] := readline stdin in
+  let () := close_in stdin in
+  let ref := set_ref _ msg ref in
+  let [msg2, ref] := get_ref _ ref in
+  let stdout := printline stdout (msg1 ^ msg2 ^ "\n") in
+  let () := close_out stdout in
+  let () := free_ref _ ref in
+  main

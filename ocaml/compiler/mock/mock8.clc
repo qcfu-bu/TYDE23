@@ -1,0 +1,8 @@
+def fits : nat -> list (nat * nat * nat) -> bool
+  | w nil => true
+  | w (cons (i, m, zero) z) => true
+  | w (cons (i, m, succ n) z) => true
+
+def x : (nat * nat * nat) := (1, 2, 3)
+
+def _ := main

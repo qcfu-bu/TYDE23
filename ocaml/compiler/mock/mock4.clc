@@ -1,0 +1,13 @@
+def case_of : ∀ (A : U) (x : A) (B : A -> U) -> (∀ (x : A) -> B x) -> B x
+  | _ x _ f => f x
+
+def foo :=
+  case_of _ true 
+    (fun 
+      | true => nat
+      | false => bool)
+    (fun 
+      | true => zero
+      | false => true)
+
+def _ := main

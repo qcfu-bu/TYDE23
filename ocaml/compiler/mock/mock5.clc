@@ -1,0 +1,63 @@
+def exn_p : U -> proto
+  | A => !(b : bool) ⋅ if b then !A ⋅ end else end
+
+data Exn (A : U) : L 
+  | Error : Exn A
+  | Ok : A -> ch‹exn_p A› -> Exn A
+
+def exn : U -> U 
+  | A => ch‹exn_p A› -> Exn A
+
+def ret : ∀ (A : U) -> A -> exn A
+  | _ m ch => Ok m ch
+
+def throw : ∀ (A : U) -> exn A
+  | _ ch =>
+    let ch := send ch false in
+    let () := close ch in
+    Error
+
+def bind : ∀ (A : U) -> exn A -> (A -> exn A) -> exn A
+  | _ e f ch =>
+    match e ch with
+    | Error => Error
+    | Ok m ch => f m ch
+
+def div2_exn_p : nat -> exn nat 
+  | zero => ret _ 0
+  | succ zero => throw _
+  | succ (succ n) =>
+    bind _ (div2_exn_p n) (fun n => ret _ (succ n))
+
+def try_exn : ∀ (A : U) -> @main -o exn A -o A -o A × @main
+  | A m f_exn_p default =>
+    let ⟨ch, m⟩ :=
+      fork (ch : ch‹exn_p A›) <- m with
+      match f_exn_p ch with
+      | Error => tt
+      | Ok x ch =>
+        let ch := send ch true in
+        let ch := send ch x in
+        close ch
+    in
+    match recv ch with
+    | [true, ch] =>
+      let [res, ch] := recv ch in
+      let () := close ch in
+      [res, m]
+    | [false, ch] =>
+      let () := close ch in
+      [default, m]
+
+def string_of_nat : nat -> string
+  | zero => "zero"
+  | succ n => "succ (" ^ string_of_nat n ^ ")"
+
+open @stdout as out
+
+def _ := 
+  let [n, main] := try_exn _ main (div2_exn_p 14) 0 in
+  let s := string_of_nat n in
+  let out := printline out (s ^ "\n") in
+  let () := close_out out in
+  main
