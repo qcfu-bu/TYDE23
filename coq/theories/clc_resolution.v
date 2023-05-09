@@ -1,3 +1,6 @@
+(* This file presents the resolution theorem and supporting
+   heap judgments such as pointer resolution, well-resolved, etc. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Utf8 Classical.
 Require Import AutosubstSsr ARS
@@ -10,6 +13,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* Values *)
 Inductive value : term -> Prop :=
 | value_sort s l :
   value (s @ l)
@@ -28,6 +32,7 @@ Inductive value : term -> Prop :=
 | value_ptr l :
   value (Ptr l).
 
+(* Strengthen induction principle for value to handle nested induction. *)
 Section value_ind_nested.
   Variable P : term -> Prop.
   Hypothesis ih_sort : forall s l, P (s @ l).
@@ -69,12 +74,22 @@ Section value_ind_nested.
   Qed.
 End value_ind_nested.
 
-Inductive pad (Θ : context term) : context term -> Prop :=
+
+(* Due to their similar structure, heaps are encode as `context term`.
+   This allows us to reuse all of the supporting judgments and lemmas
+   already defined for CILC contexts. *)
+Definition heap := program_ctx.
+
+(* pad H1 H2 asserts that H2 can be created by padding H1 with
+   non-linear cells or empty cells . *)
+Inductive pad (Θ : heap) : context term -> Prop :=
 | pad_O : pad Θ Θ
 | pad_U Θ' m : pad Θ Θ' -> pad Θ (m :U Θ')
 | pad_N Θ' : pad Θ Θ' -> pad Θ (_: Θ').
 
-Inductive lookup : context term -> nat -> term -> context term -> Prop :=
+(* lookup H l m H' means to lookup the cell located at position l.
+   If the cell is linear, free it. Otherwise, do nothing. *)
+Inductive lookup : heap -> nat -> term -> heap -> Prop :=
 | lookup_U Θ m l :
   l = size Θ ->
   lookup (Some (m, U) :: Θ) l m (Some (m, U) :: Θ)
@@ -93,6 +108,7 @@ Inductive constr_head : term -> Prop :=
 | Constr_head i I s ms :
   constr_head (spine (Constr i I s) ms).
 
+(* Pointer resolution. *)
 Inductive resolve : context term -> term -> term -> Prop :=
 | resolve_var Θ x :
   Θ |> U ->
@@ -140,6 +156,7 @@ Inductive resolve : context term -> term -> term -> Prop :=
   resolve Θ' m m' ->
   resolve Θ (Ptr l) m'.
 
+(* Strengthen induction principle for resolve to handle nested induction. *)
 Section resolve_ind_nested.
   Variable P : context term -> term -> term -> Prop.
   Hypothesis ih_var :
@@ -225,6 +242,7 @@ Section resolve_ind_nested.
   Qed.
 End resolve_ind_nested.
 
+(* Resolved m holds iff there are no pointer expressions in m. *)
 Inductive resolved : term -> Prop :=
 | resolved_var x :
   resolved (Var x)
@@ -259,6 +277,7 @@ Inductive resolved : term -> Prop :=
   resolved m ->
   resolved (Fix k A m).
 
+(* Strengthen induction principle for resolved to handle nested induction. *)
 Section resolved_ind_nested.
   Variable P : term -> Prop.
   Hypothesis ih_var : forall x, P (Var x).
@@ -388,6 +407,7 @@ Proof with eauto using resolved, All1.
     constructor... }
 Qed.
 
+(* Well-Resolved *)
 Inductive well_resolved :
   context term -> term -> term -> term -> sort -> Prop :=
 | Well_resolved Θ m n A t :
@@ -701,6 +721,8 @@ Proof with eauto using merge.
   split...
 Qed.
 
+(* nf i m holds iff for every DeBrujin index j such that i <= j,
+   the variable encoded by j occurs bound in m. *)
 Inductive nf : nat -> term -> Prop :=
 | nf_var i x :
   x < i ->
@@ -738,6 +760,7 @@ Inductive nf : nat -> term -> Prop :=
 | nf_ptr i l :
   nf i (Ptr l).
 
+(* Strengthen induction principle for nf to handle nested induction. *)
 Section nf_ind_nested.
   Variable P : nat -> term -> Prop.
   Hypothesis ih_var :
@@ -811,11 +834,13 @@ Section nf_ind_nested.
   Qed.
 End nf_ind_nested.
 
+(* A spine consists of only pointers. *)
 Inductive all_ptr : list term -> Prop :=
 | all_ptr_nil : all_ptr nil
 | all_ptr_cons l ms :
   all_ptr ms -> all_ptr (Ptr l :: ms).
 
+(* WR-Heaps *)
 Inductive wr_heap : context term -> Prop :=
 | wr_nil : wr_heap nil
 | wr_sort Θ s i :
@@ -1601,6 +1626,7 @@ Proof.
   simpl; eauto.
 Qed.
 
+(* Theorem 8 (Resolution) *)
 Theorem resolution Θ m n A t :
   nil ⊢ n : A : t -> value n -> wr_heap Θ -> resolve Θ m n -> Θ |> t.
 Proof with eauto using key_impure.
@@ -1765,6 +1791,7 @@ Proof.
   { have[e1[e2[e3 e4]]]:=spine_constr_inj e; subst=>//. }
 Qed.
 
+(* Resolving a value in a wr-heap always yields a value. *)
 Lemma resolve_value Θ m n :
   resolve Θ m n -> value m -> wr_heap Θ -> value n.
 Proof with eauto using value, All1.
@@ -1806,6 +1833,7 @@ Proof with eauto using value, All1.
     apply: lookup_wr; eauto. }
 Qed.
 
+(* Resolving a pointer in a wr-heap always yields a value. *)
 Lemma wr_resolve_value Θ l n :
   wr_heap Θ -> resolve Θ (Ptr l) n -> value n.
 Proof.

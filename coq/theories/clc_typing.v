@@ -1,3 +1,5 @@
+(* This file defines the typing rules of CILC. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Classical Utf8.
 Require Import AutosubstSsr ARS 
@@ -7,10 +9,12 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* Arities *)
 Inductive arity (s : sort) (l : nat) : term -> Prop :=
 | arity_sort : arity s l (s @ l)
 | arity_pi A B : arity s l B -> arity s l (Pi A B U U U).
 
+(* noccurs x m asserts that x does not occur in term m. *)
 Inductive noccurs : var -> term -> Prop :=
 | noccurs_var x y : ~x = y -> noccurs x (Var y)
 | noccurs_sort x s l : noccurs x (s @ l)
@@ -30,6 +34,7 @@ Inductive noccurs : var -> term -> Prop :=
   noccurs x A -> noccurs x.+1 m -> noccurs x (Fix k A m)
 | noccurs_ptr x l : noccurs x (Ptr l).
 
+(* Strengthen induction principle for noccurs to handle nested induction. *)
 Section noccurs_ind_nested.
   Variable P : var -> term -> Prop.
   Hypothesis ih_var : forall x y, ~x = y -> P x (Var y).
@@ -80,10 +85,12 @@ Section noccurs_ind_nested.
   Qed.
 End noccurs_ind_nested.
 
+(* Positivity condition. *)
 Inductive pos : var -> term -> Prop :=
 | pos_X x ms : All1 (noccurs x) ms -> pos x (spine (Var x) ms)
 | pos_pi x A B s r t : noccurs x A -> pos x.+1 B -> pos x (Pi A B s r t).
 
+(* Well-formed Constructors. *)
 Inductive constr : var -> sort -> term -> Prop :=
 | constr_X x s ms :
   All1 (noccurs x) ms ->
@@ -100,6 +107,7 @@ Inductive constr : var -> sort -> term -> Prop :=
   constr x.+1 s B ->
   constr x s (Pi A B t s s).
 
+(* The rearity function computes a motive type from arity A. *)
 Fixpoint rearity (k s : sort) (I A : term) : term :=
   match A with
   | _ @ l =>
@@ -136,6 +144,7 @@ Definition r1 sp s :=
   | _ => s
   end.
 
+(* r2 computes the branch type from a constructor type sp. *)
 Fixpoint r2 (k s : sort) hd c sp := 
   match sp with
   | Pi A B u _ t =>
@@ -166,6 +175,7 @@ Qed.
 
 Definition mkcase k s I Q c C := respine k s Q c C.[I/].
 
+(* Conditional Apply. *)
 Definition kapp k m n :=
   match k with
   | U => App m n
@@ -175,6 +185,7 @@ Definition kapp k m n :=
 Reserved Notation "Γ ⊢ m : A : s" 
   (at level 50, m, A, s at next level).
 
+(* Typing rules for CILC.  *)
 Inductive clc_type : context term -> term -> term -> sort -> Prop :=
 | clc_axiom Γ s l :
   Γ |> U ->
@@ -236,6 +247,7 @@ Inductive clc_type : context term -> term -> term -> sort -> Prop :=
   Γ ⊢ m : B : s
 where "Γ ⊢ m : A : s" := (clc_type Γ m A s).
 
+(* Strengthen induction principle for clc_type to handle nested induction. *)
 Section clc_type_ind_nested.
   Variable P : context term -> term -> term -> sort -> Prop.
   Hypothesis ih_sort : forall Γ s l,
@@ -369,6 +381,7 @@ Proof.
   constructor; eauto.
 Qed.
 
+(* Well-formed contexts. *)
 Inductive ok : context term -> Prop :=
 | nil_ok :
   ok nil

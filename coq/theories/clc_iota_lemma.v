@@ -1,3 +1,5 @@
+(* This file presents lemmas required for proving the soundness of ι-reductions. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Utf8 Classical.
 Require Import AutosubstSsr ARS

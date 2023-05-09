@@ -1,3 +1,5 @@
+(* This file presents the weakening lemmas for the CILC. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Classical Utf8.
 Require Import AutosubstSsr ARS 
@@ -7,6 +9,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* Relation to strengthen induction for generalized renaming lemma. *)
 Inductive agree_ren : (var -> var) ->
   context term -> context term -> Prop :=
 | agree_ren_nil ξ :
@@ -496,6 +499,7 @@ Proof.
   { apply: ih; eauto. }
 Qed.
 
+(* Generalized renaming lemma. *)
 Lemma rename_ok Γ Γ' m A s ξ :
   Γ ⊢ m : A : s -> agree_ren ξ Γ Γ' -> Γ' ⊢ m.[ren ξ] : A.[ren ξ] : s.
 Proof with eauto using 
@@ -602,18 +606,21 @@ Proof with eauto using agree_ren, agree_ren_refl.
     apply: rename_ok; eauto... }
 Qed.
 
+(* Theorem 2 (Weakening) *)
 Lemma weakeningU Γ m A B s :
   Γ ⊢ m : A : s -> B :U Γ ⊢ m.[ren (+1)] : A.[ren (+1)] : s.
 Proof with eauto using agree_ren, agree_ren_refl.
   move=>ty. apply: rename_ok...
 Qed.
 
+(* Weakening context Γ with an empty position is also admissible. *)
 Lemma weakeningN Γ m A s :
   Γ ⊢ m : A : s -> _: Γ ⊢ m.[ren (+1)] : A.[ren (+1)] : s.
 Proof with eauto using agree_ren, agree_ren_refl.
   move=>ty. apply: rename_ok...
 Qed.
 
+(* Alternative statement more suitable for certain Coq tactics *)
 Lemma eweakeningU Γ m m' A A' B s :
   m' = m.[ren (+1)] -> 
   A' = A.[ren (+1)] ->
@@ -622,6 +629,7 @@ Proof.
   move=>*; subst. by apply: weakeningU.
 Qed.
 
+(* Alternative statement more suitable for certain Coq tactics *)
 Lemma eweakeningN Γ m m' A A' s :
   m' = m.[ren (+1)] -> 
   A' = A.[ren (+1)] ->

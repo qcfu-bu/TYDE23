@@ -1,3 +1,5 @@
+(* This files presents the substitution lemmas for CILC. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Classical Utf8.
 Require Import AutosubstSsr ARS 
@@ -8,8 +10,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* Relation to strengthen induction for simultaneous substitution. *)
 Reserved Notation "Δ ⊢ σ ⊣ Γ" (at level 50, σ, Γ at next level).
-
 Inductive agree_subst :
   context term -> (var -> term) -> context term -> Prop :=
 | agree_subst_nil σ :
@@ -598,6 +600,7 @@ Proof.
   { apply: ih; eauto. }
 Qed.
 
+(* Simultaneous substitution lemma. *)
 Lemma esubstitution Γ m A Δ s σ :
   Γ ⊢ m : A : s -> Δ ⊢ σ ⊣ Γ -> Δ ⊢ m.[σ] : A.[σ] : s.
 Proof with eauto using agree_subst, agree_subst_re, agree_subst_key.
@@ -667,6 +670,7 @@ Proof with eauto using agree_subst, agree_subst_re, agree_subst_key.
     apply: ihB... }
 Qed.
 
+(* Theorem 3 (Substitution) *)
 Lemma substitution Γ1 Γ2 Γ m n A B s t :
   A :{s} Γ1 ⊢ m : B : t ->
   Γ2 |> s ->
@@ -686,6 +690,8 @@ Proof with eauto.
     by asimpl. }
 Qed.
 
+(* Substituting an empty position in the context with any well-typed term
+   is admissible. Notice that only Γ1 is kept. *)
 Lemma substitutionN Γ1 Γ2 m n A B s t :
   _: Γ1 ⊢ m : B : s -> Γ2 ⊢ n : A : t -> Γ1 ⊢ m.[n/] : B.[n/] : s.
 Proof with eauto.
@@ -694,6 +700,7 @@ Proof with eauto.
   apply: agree_subst_wkN...
 Qed.
 
+(* Empty positions can be removed by strengthening. *)
 Lemma strengthen Γ m A s :
   _: Γ ⊢ m.[ren (+1)] : A.[ren (+1)] : s -> Γ ⊢ m : A : s.
 Proof with eauto using key.
@@ -704,6 +711,7 @@ Proof with eauto using key.
   by asimpl.
 Qed.
 
+(* Context conversion lemma. *)
 Lemma context_conv Γ m A B C s t l :
   B === A -> 
   [Γ] ⊢ A : s @ l : U -> A :{s} Γ ⊢ m : C : t -> B :{s} Γ ⊢ m : C : t.

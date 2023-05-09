@@ -23,7 +23,7 @@ Once dependencies have been met, run `make` in the `theories` directory.
 - `clc_arity_spine.v`  : Various lemmas for manipulating arities and spine forms.
 - `clc_validity.v`     : Proof of type validity theorem.
 - `clc_typing_spine.v` : Formalization of a "typing spine" structure.
-- `clc_respine.v`      : Lemmas for "unapplying" and "reapplying" typing spines.
+- `clc_respine.v`      : Soundness lemmas for computing branch types.
 - `clc_iota_lemma.v`   : Lemmas for proving the soundness of ι-reductions.
 - `clc_soundness.v`    : Type soundness theorem of CILC.
 - `clc_resolution.v`   : Proof of pointer resolution theorem.

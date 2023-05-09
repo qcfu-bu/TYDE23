@@ -1,3 +1,5 @@
+(* The file presents various inversion lemmas for CILC. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Utf8 Classical.
 Require Import AutosubstSsr ARS 

@@ -1,3 +1,5 @@
+(* This file presents the type validity theorem of CILC. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Utf8 Classical.
 Require Import AutosubstSsr ARS 
@@ -40,6 +42,7 @@ Proof with eauto using ok.
     split... }
 Qed.
 
+(* Theorem 4 (Validity) *)
 Theorem validity Γ m A s :
   ok Γ -> Γ ⊢ m : A : s -> exists l, [Γ] ⊢ A : s @ l : U.
 Proof with eauto using clc_type, re_pure, merge_re_id.

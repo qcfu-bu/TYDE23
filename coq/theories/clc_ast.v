@@ -1,3 +1,5 @@
+(* This file defines the abstract syntax of CILC and its reductions. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Classical Utf8.
 Require Import AutosubstSsr ARS clc_context.
@@ -6,30 +8,37 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* Abstract syntax tree of CILC.
+   Variables are represented using DeBrujin indices. *)
 Inductive term : Type :=
 (* core *)
 | Var    (x : var)
 | Sort   (s : sort) (l : nat)
-| Pi     (A : term) (B : {bind term}) (s r t : sort)
-| Lam    (A : term) (m : {bind term}) (s t : sort)
+| Pi     (A : term) (B : {bind term}) (s r t : sort) (* Πt (x :s A).r B *)
+| Lam    (A : term) (m : {bind term}) (s t : sort)   (* λt (x :s A).m *)
 | App    (m n : term)
 | Ind    (A : term) (Cs : list {bind term}) (s : sort)
 | Constr (i : nat) (m : term) (s : sort)
 | Case   (m Q : term) (Fs : list term)
 | Fix    (k : nat) (A : term) (m : {bind term})
-| Ptr    (l : nat).
+| Ptr    (l : nat) (* *l *).
 
 Notation "s @ l" := (Sort s l) (at level 30).
 
+(* Derive basic syntactic lemmas using autosubst. *)
 #[global] Instance Ids_term : Ids term. derive. Defined.
 #[global] Instance Rename_term : Rename term. derive. Defined.
 #[global] Instance Subst_term : Subst term. derive. Defined.
 #[global] Instance substLemmas_term : SubstLemmas term. derive. Qed.
 
+(* Assertion that all elements in a list have property P.  *)
 Inductive All1 (P : term -> Prop) : list term -> Prop :=
 | All1_nil : All1 P nil
 | All1_cons m ls : P m -> All1 P ls -> All1 P (m :: ls).
 
+(* The `term` inductive type that we have defined uses nested `list term`.
+   We define define our own induction principles that is sufficently strong
+   to carry out nested induction. *)
 Section term_ind_nested.
   Variable P : term -> Prop.
   Hypothesis ih_var : forall x, P (Var x).
@@ -66,12 +75,15 @@ Section term_ind_nested.
   Qed.
 End term_ind_nested.
 
+(* Spine forms.
+   spine hd [m1; m2; m3 .... ] = ((((hd m1) m2) m3) ...) *)
 Fixpoint spine (h : term) (ls : list term) : term :=
   match ls with
   | nil => h
   | m :: ls => spine (App h m) ls
   end.
 
+(* Assert the element at a particular postion in a list. *)
 Inductive iget : nat -> list term -> term -> Prop :=
 | iget_O m ls :
   iget 0 (m :: ls) m
@@ -79,6 +91,8 @@ Inductive iget : nat -> list term -> term -> Prop :=
   iget n ls m ->
   iget (S n) (m' :: ls) m.
 
+(* Assert that there exists a pair m1 and m2 from lists ls1 and ls2
+   respectively that satisfy relation R m1 m2. *)
 Inductive One2 R : list term -> list term -> Prop :=
 | One2_hd m m' ls :
   R m m' ->
@@ -87,6 +101,7 @@ Inductive One2 R : list term -> list term -> Prop :=
   One2 R ls ls' ->
   One2 R (m :: ls) (m :: ls').
 
+(* Standard single step reduction. *)
 Reserved Notation "m ~> n" (at level 30).
 Inductive step : term -> term -> Prop :=
 | step_beta A m n s t :
@@ -146,6 +161,9 @@ Notation red := (star step).
 Notation "m ~>* n" := (red m n) (at level 30).
 Notation "m === n" := (conv step m n) (at level 50).
 
+(* The `step` inductive type that we have defined uses nested `One2 step`.
+   We define define our own induction principles that is sufficently strong
+   to carry out nested induction. *)
 Section step_ind_nested.
   Variable P : term -> term -> Prop.
   Hypothesis ih_beta :

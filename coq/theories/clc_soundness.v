@@ -1,3 +1,5 @@
+(* This file presents the subject reduction theorem for CILC. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Utf8 Classical.
 Require Import AutosubstSsr ARS
@@ -449,6 +451,7 @@ Proof.
   { constructor; eauto. }
 Qed.
 
+(* Theorem 5 (Subject Reduction) *)
 Theorem subject_step Γ m n A s :
   ok Γ -> Γ ⊢ m : A : s -> m ~> n -> Γ ⊢ n : A : s.
 Proof with eauto using clc_type, step, ok, merge_re_id.

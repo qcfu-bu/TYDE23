@@ -1,3 +1,5 @@
+(* This file defines the heap semantics of CILC and its soundness theorem. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Utf8 Classical.
 Require Import AutosubstSsr ARS
@@ -10,6 +12,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* Turner-Wadler style small-step relation *)
 Inductive eval : context term -> term -> context term -> term -> Prop :=
 | eval_sort Θ s i l :
   l = size Θ ->
@@ -74,6 +77,7 @@ Inductive eval : context term -> term -> context term -> term -> Prop :=
     Θ (spine (Ptr l1) (rcons ms (Ptr l2)))
     ((spine (Constr i I s) ns) :{s} Θ2) (spine m.[Ptr l1/] (rcons ms (Ptr l))).
 
+(* Relation to strengthen induction for simultaneous substitution. *)
 Inductive agree_resolve :
   context term -> context term -> 
   (var -> term) -> (var -> term) -> nat -> Prop :=
@@ -715,6 +719,12 @@ Proof.
   apply: wr_heap_re; eauto.
 Qed.
 
+(* To prove the heap subject reduction theorem, a more general version
+   of the theorem is proven first. `eval_split` allows for parts of the heap
+   to remain untouched by reduction. Intuitively, the sub-heaps that 
+   participate in heap reductions are proven to obey subject reduction.
+   Finally, the untouched sub-heaps are merged back together with the
+   sub-heaps that come out of heap reduction. *)
 Lemma eval_split Θ1 Θ2 Θ Θ' m n m' A t :
   well_resolved Θ1 m n A t -> wr_heap Θ -> 
   Θ1 ∘ Θ2 => Θ -> eval Θ m Θ' m' ->
@@ -1271,6 +1281,7 @@ Proof with eauto 6 using
     repeat split... }
 Qed.
 
+(* Theorem 9 (Heap-Soundness) *)
 Theorem evaluation Θ Θ' m m' n A t :
   wr_heap Θ -> well_resolved Θ m m' A t -> eval Θ m Θ' n -> 
   exists n', well_resolved Θ' n n' A t /\ wr_heap Θ' /\ m' ~>* n'.
@@ -1283,6 +1294,7 @@ Proof.
   exists n'; eauto.
 Qed.
 
+(* Closed terms are trivially well-resolved. *)
 Theorem type_resolved m A t : 
   nil ⊢ m : A : t -> well_resolved nil m m A t.
 Proof.

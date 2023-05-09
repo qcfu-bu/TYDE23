@@ -1,3 +1,6 @@
+(* This file presents the confluence theorem for CILC
+   and various congruence lemmas and corollaries of confluence. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Classical Utf8.
 Require Import AutosubstSsr ARS clc_context clc_ast.
@@ -6,6 +9,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* All2 asserts that all elements in ls1 and ls2 satisfy relation R pairwise. *)
 Inductive All2 R : list term -> list term -> Prop :=
 | All2_nil : All2 R nil nil
 | All2_cons m m' ls ls' :
@@ -13,6 +17,8 @@ Inductive All2 R : list term -> list term -> Prop :=
   All2 R ls ls' ->
   All2 R (m :: ls) (m' :: ls').
 
+(* All2i asserts that all elements in ls1 and ls2 satisfy relation Ri pairwise
+   where i is position of the pairs in their respective lists. *)
 Inductive All2i R : nat -> list term -> list term -> Prop :=
 | All2i_nil i : All2i R i nil nil
 | All2i_cons i m m' ls ls' :
@@ -20,6 +26,7 @@ Inductive All2i R : nat -> list term -> list term -> Prop :=
   All2i R i.+1 ls ls' ->
   All2i R i (m :: ls) (m' :: ls').
 
+(* Parallel reduction for the CILC. *)
 Inductive pstep : term -> term -> Prop :=
 | pstep_var x :
   pstep (Var x) (Var x)
@@ -76,6 +83,9 @@ Inductive pstep : term -> term -> Prop :=
 | pstep_ptr l :
   pstep (Ptr l) (Ptr l).
 
+(* The `pstep` inductive type that we have defined uses nested `All2 term`.
+   We define define our own induction principles that is sufficently strong
+   to carry out nested induction. *)
 Section pstep_ind_nested.
   Variable P : term -> term -> Prop.
   Hypothesis ih_var : forall x, P (Var x) (Var x).
@@ -1212,6 +1222,7 @@ Proof.
   by rewrite revK.
 Qed.
 
+(* Diamond property for parallel reduction. *)
 Lemma pstep_diamond m m1 m2 :
   pstep m m1 -> pstep m m2 -> exists2 m', pstep m1 m' & pstep m2 m'.
 Proof with eauto 6 using 
@@ -1374,6 +1385,7 @@ Proof with eauto using pstep_refl, star.
   by apply: pstep_red.
 Qed.
 
+(* Theorem 1 (Confluence) *)
 Theorem confluence :
   confluent step.
 Proof with eauto using step, star.
@@ -1616,6 +1628,7 @@ Proof.
   apply: All2_conv_sym; eauto.
 Qed.
 
+(* Helpful tatics for the refutation of obvious inequalities. *)
 Ltac red_inv m H :=
   match m with
   | Var    => apply red_var_inv in H

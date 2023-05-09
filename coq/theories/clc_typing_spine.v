@@ -1,3 +1,5 @@
+(* This file presents the typing_spine structure and its properties. *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Utf8 Classical.
 Require Import AutosubstSsr ARS
@@ -9,6 +11,14 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* A typing_spine is a temporary typing structure for maintaining the types of spine forms.
+
+   For example, given typing `Γ ⊢ hd m1 m2 m3 ... mk :s A`,
+   we can "unapply" the spine `m1 m2 m3 .. mk` to form a typing_spine.
+
+   So for judgment `typing Γ A s ms B t`, it expects to be applied on a term of type A
+   and sort s and produces a term of B and sort t. The context Γ tracks the accumulated
+   resources in ms. *)
 Inductive typing_spine :
   context term -> term -> sort -> list term -> term -> sort -> Prop :=
 | typing_spine_nil Γ A B s l :
@@ -35,6 +45,7 @@ Proof.
   apply: typing_spine_pi; eauto.
 Qed.
 
+(* Applying a typing_spine. *)
 Lemma app_typing_spine Γ1 Γ2 Γ m ms A B s t :
   Γ1 ⊢ m : A : s ->
   typing_spine Γ2 A s ms B t ->
@@ -264,6 +275,7 @@ Proof.
     rewrite e; eauto. }
 Qed.
 
+(* Unapply a spine form into a typing_spine. *)
 Lemma spine_inv Γ m ms B t :
   ok Γ -> Γ ⊢ spine m ms : B : t ->
   exists Γ1 Γ2 A s,

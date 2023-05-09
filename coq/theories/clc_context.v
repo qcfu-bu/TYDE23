@@ -1,5 +1,8 @@
-From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
+(* This file defines the context (Γ).
+   Context merge, context constraint and their respective properties
+   are also presented here. *)
 
+From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Classical Utf8.
 Require Import AutosubstSsr ARS.
 
@@ -14,6 +17,11 @@ Open Scope sort_scope.
 Inductive sort : Type := U | L.
 Bind Scope sort_scope with sort.
 
+(* A program context is encoded as a list of optional entries. The
+   ability to have empty positions in the program context is necessary
+   for facilitating the DeBrujin indices representation of variables.
+   If position i in the entry list is empty, then variable i does not
+   exist in that program context. *)
 Definition elem T := option (T * sort).
 Definition context T := seq (elem T).
 
@@ -40,6 +48,11 @@ Inductive sort_leq : sort -> sort -> Prop :=
   sort_leq L L.
 Infix "≤" := sort_leq : sort_scope.
 
+(* Context merge is defined as a ternary relation instead of a
+   function. During merging, we see that positions corresponding to
+   linearly typed variables can only be merged with an empty position.
+   So a valid instance of Γ1 ∘ Γ2 => Γ asserts that Δ1 and Δ2 and merge
+   successfully as context Γ. *)
 Reserved Notation "Γ1 ∘ Γ2 => Γ" (at level 40).
 Inductive merge T : context T -> context T -> context T -> Prop :=
 | merge_nil :
@@ -58,6 +71,7 @@ Inductive merge T : context T -> context T -> context T -> Prop :=
   _: Γ1 ∘ _: Γ2 => _: Γ
 where "Γ1 ∘ Γ2 => Γ" := (merge Γ1 Γ2 Γ).
 
+(* Context constraint. *)
 Reserved Notation "Γ |> s" (at level 40).
 Inductive key T : context T -> sort -> Prop :=
 | key_nil s :
@@ -73,6 +87,7 @@ Inductive key T : context T -> sort -> Prop :=
   _: Γ |> s
 where "Γ |> s" := (key Γ s).
 
+(* `has` Γ x s A represents (x :s A) ∈ Γ ∧ (Γ\x) ▷ U *)
 Inductive has {T} `{Ids T} `{Subst T} :
   context T -> var -> sort -> T -> Prop :=
 | has_O Γ A s :
@@ -85,6 +100,7 @@ Inductive has {T} `{Ids T} `{Subst T} :
   has Γ x s A ->
   has (_: Γ) x.+1 s A.[ren (+1)].
 
+(* Context Restriction *)
 Fixpoint re T (Γ : context T) : context T :=
   match Γ with
   | Some (m, U) :: Γ => Some (m, U) :: re Γ

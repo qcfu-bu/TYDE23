@@ -1,3 +1,5 @@
+(* This file presents the subtyping relation of CILC and its properties.  *)
+
 From mathcomp Require Import ssreflect ssrbool eqtype ssrnat seq.
 From Coq Require Import ssrfun Classical Utf8.
 Require Import AutosubstSsr ARS clc_context clc_ast clc_confluence.
@@ -16,6 +18,7 @@ Inductive sub1 : term -> term -> Prop :=
   sub1 B1 B2 -> 
   sub1 (Pi A B1 s r t) (Pi A B2 s r t).
 
+(* Subtyping of A and B. *)
 CoInductive sub (A B : term) : Prop :=
 | SubI A' B' : 
   sub1 A' B' -> A === A' -> B' === B -> sub A B.
@@ -55,6 +58,7 @@ Proof with eauto 6 using sub1, sub1_sub, sub1_conv, conv_sub1.
     exact: conv_pi.
 Qed.
 
+(* Transitivity of subtyping. *)
 Lemma sub_trans B A C :
   A <: B -> B <: C -> A <: C.
 Proof.
@@ -123,6 +127,7 @@ Proof. move=> [A' B' /sub1_subst]; eauto using sub, conv_subst. Qed.
 Lemma sub_ren A B ξ : A <: B -> A.[ren ξ] <: B.[ren ξ].
 Proof. move=> *; by apply: sub_subst. Qed.
 
+(* Helpful tatics for the refutation of obviously wrong subtyping. *)
 Ltac solve_sub :=
   match goal with
   | [ H : _ <: _ |- _ ] =>
