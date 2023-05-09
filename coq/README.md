@@ -60,4 +60,16 @@ The following table shows the file containing the encodings of various judgments
 
 ### Meta Theory
 
-The 
+Meta theorems presented in the paper can be found in the following files.
+We did not formalize the theorems concerning strong normalization theorems described in Section 6.5.
+
+| name in paper                 | file                                                |
+|-------------------------------|-----------------------------------------------------|
+| Theorem 1 (Confluence)        | [clc_confluence.v](./theories/clc_confluence.v)     |
+| Theorem 2 (Weakening)         | [clc_weakening.v](./theories/clc_weakening.v)       |
+| Theorem 3 (Substitution)      | [clc_substitution.v](./theories/clc_substitution.v) |
+| Theorem 4 (Validity)          | [clc_validity](./theories/clc_validity.v)           |
+| Theorem 5 (Subject Reduction) | [clc_soundness.v](./theories/clc_soundness.v)       |
+| Theorem 8 (Resolution)        | [clc_resolution.v](./theories/clc_resolution.v)     |
+| Theorem 9 (Heap-Soundness)    | [clc_semantics.v](./theories/clc_semantics.v)       |
+    
