@@ -41,13 +41,6 @@ let run s1 s2 s3 s4 =
         Printf.fprintf ch2
           "trans12 success-------------------------------------\n\n"
       in
-      let res = Eval2.eval_dcls dcls in
-      let s = str "%a@." Eval2.pp_res res in
-      let _ = Printf.fprintf ch2 "%s" s in
-      let _ =
-        Printf.fprintf ch2
-          "eval2 success---------------------------------------\n\n"
-      in
       let prog = Trans23.trans_dcls dcls in
       let s = str "%a@." Pprint3.pp_prog prog in
       let _ = Printf.fprintf ch2 "%s" s in
