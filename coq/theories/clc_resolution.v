@@ -78,7 +78,7 @@ End value_ind_nested.
 (* Due to their similar structure, heaps are encode as `context term`.
    This allows us to reuse all of the supporting judgments and lemmas
    already defined for CILC contexts. *)
-Definition heap := program_ctx.
+Definition heap := context term.
 
 (* pad H1 H2 asserts that H2 can be created by padding H1 with
    non-linear cells or empty cells . *)
