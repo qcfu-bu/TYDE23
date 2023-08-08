@@ -1,4 +1,4 @@
-CC=gcc
+CC=clang
 RMF=rm -rf
 CFLAGS=-g -O2 -lgc
 SRC = main.c runtime.c chan.c queue.c
