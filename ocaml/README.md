@@ -8,6 +8,11 @@
 - `mparser`
 - `zarith`
 
+## C Dependencies
+- `clang`
+- `pthreads`
+- `bohem gc`
+
 ## Usage
 Example source files of varying complexity are given in the `tests` directory. 
 
